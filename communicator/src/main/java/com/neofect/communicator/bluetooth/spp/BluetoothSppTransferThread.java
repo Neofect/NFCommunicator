@@ -18,6 +18,8 @@ package com.neofect.communicator.bluetooth.spp;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
+import com.neofect.communicator.util.TransferCache;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,7 +43,7 @@ class BluetoothSppTransferThread extends Thread {
 
 	private byte[] buffer = new byte[BUFFER_SIZE];
 	private boolean socketClosed = false;
-	
+
 	/**
 	 * Constructor for {@link BluetoothSppTransferThread}. This throws IOException when failed to get input / output streams from provided socket.
 	 * 
@@ -111,14 +113,17 @@ class BluetoothSppTransferThread extends Thread {
 		do {
 			try {
 				int numberOfReadBytes = inputStream.read(buffer, 0, buffer.length);
-				byte[] readData = new byte[numberOfReadBytes];
+				byte[] readData = TransferCache.INSTANCE.pollCache(numberOfReadBytes);
+				if(readData == null) {
+					continue;
+				}
 				System.arraycopy(buffer, 0, readData, 0, numberOfReadBytes);
 				connection.onReadMessage(readData);
+				TransferCache.INSTANCE.returnCache(readData);
 			} catch (IOException e) {
 				Log.d(LOG_TAG, "run: IOException on read(), device=" + connection.getDescriptionWithAddress());
 				onDisconnected();
 			}
 		} while (connection.isConnected());
 	}
-	
 }

@@ -150,6 +150,11 @@ public class ByteRingBuffer {
 		consume(length);
 		return result;
 	}
+
+	public void read(byte[] result) {
+		readWithoutConsume(result);
+		consume(result.length);
+	}
 	
 	/**
 	 * Read byte sequence of given length and return it as an array. The returned byte array is newly created.
@@ -166,6 +171,19 @@ public class ByteRingBuffer {
 		byte[] result = new byte[length];
 		fillByteArrayFromInternalBuffer(result, 0, 0, length);
 		return result;
+	}
+
+	/**
+	 * byte 배열만큼 읽어옴.
+	 * @param result
+	 * @return
+	 */
+	public void readWithoutConsume(byte[] result) {
+		int length = result.length;
+		if (length > contentSize) {
+			throw new ArrayIndexOutOfBoundsException("Possible length=" + contentSize + ", but requested=" + length);
+		}
+		fillByteArrayFromInternalBuffer(result, 0, 0, length);
 	}
 	
 	public void clear() {
